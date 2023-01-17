@@ -1,7 +1,8 @@
 # DUKES (Digest of UK Energy Statistics) National-Energy-Stats
 Analysis of data from https://www.gov.uk/government/statistics/digest-of-uk-energy-statistics-dukes-2021
 
-![Example](/DomesticConsumption.jpg?raw=true "Electricty and Gas : Year on Year % change")
+#### Example : % Change Year on Year of Domestic Energy Consumption in England
+<img src="/DomesticConsumption.jpg" width="400" height="400">
 
 # Measures
 The dataset has the measures listed below for electricity and/or gas supply between 2015 and 2021
