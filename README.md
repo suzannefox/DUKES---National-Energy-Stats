@@ -6,7 +6,7 @@ Analysis of data from https://www.gov.uk/government/statistics/digest-of-uk-ener
 
 # Measures
 The dataset has the measures listed below for electricity and/or gas supply between 2015 and 2021
-these are available regionally at local authority level and nationally
+these are available both regionally at local authority level and nationally
 
 
 ## Gas Consumption
