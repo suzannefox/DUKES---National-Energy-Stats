@@ -6,6 +6,15 @@ library(here)
 
 data_source <- 'https://www.gov.uk/government/publications/regional-energy-data-guidance-note'
 
+fn_pcent <- function(numerator, denominator) {
+  pcent <- numerator / denominator * 100
+  pcent <- round(pcent, 1)
+  pcent <- as.character(pcent)
+  pcent <- replace_na(pcent, '-')
+  pcent <- paste0(pcent,'%')
+  pcent <- replace(pcent, pcent == '-%', '-')
+}
+
 # -------------------------------------------------------------------------
 # STEP 1
 # make a df of the list of files/sheets to scrape
@@ -49,7 +58,8 @@ for (i in seq_len(nrow(dfs))) {
   df_temp <- df_temp %>% 
     mutate(year = myyear,
            type = mytype) %>% 
-    pivot_longer(-c('year','type','code','country_or_region','local_authority','notes')) 
+    pivot_longer(-c('year','type','code','country_or_region','local_authority','notes'),
+                 names_to = 'measure') 
   
   # make a dummy consolidated output df
   if (i == 1) df_energy <- df_temp %>% slice(0)
@@ -60,17 +70,23 @@ for (i in seq_len(nrow(dfs))) {
 }
 
 # remove the decimal places from the values
-df_energy <- df_energy %>% mutate(value = round(value, 0))
+df_energy <- df_energy %>% 
+  mutate(value = round(value, 0))
+
+# list the available measures
+df_energy %>% 
+  count(type, measure) %>% 
+  print(n = Inf)
 
 # -------------------------------------------------------------------------
-# STEP 3.
-# Do some EDA
+# STEP 3.a
+# Rise in meters
 
-df_energy %>% filter(year == 2015) %>% count(type, year, name) %>% print(n = Inf)
+df_energy %>% filter(year == 2015) %>% count(type, year, measure) %>% print(n = Inf)
 
 df_energy %>% 
   filter(country_or_region == 'England') %>% 
-  filter(name %in% c('number_of_meters_thousands_domestic','number_of_meters_thousands_all_domestic')) %>% 
+  filter(measure %in% c('number_of_meters_thousands_domestic','number_of_meters_thousands_all_domestic')) %>% 
   ggplot(aes(x=year, y = value, fill = type)) +
   geom_bar(position = 'stack', stat='identity') +
   geom_text(aes(label = value), vjust = -0.5, position = position_stack(vjust = .5)) +
@@ -81,11 +97,34 @@ df_energy %>%
 
 df_energy %>% 
   filter(country_or_region == 'England') %>% 
-  filter(name %in% c('total_consumption_g_wh_domestic','total_consumption_g_wh_all_domestic')) %>% 
+  filter(measure %in% c('number_of_meters_thousands_domestic','number_of_meters_thousands_all_domestic')) %>% 
+  group_by(type, year) %>% 
+  summarise(total = sum(value)) %>% 
+  ungroup() %>% 
+  group_by(type) %>% 
+  # this years total minus last years, as a percent of last years
+  # total and lag(total are vectors)
+  mutate(rise = fn_pcent(total - lag(total), lag(total)))
+  
+
+# -------------------------------------------------------------------------
+# STEP 3.a
+# gas/electricity annual fluctuations
+
+df_energy %>% 
+  filter(country_or_region == 'England') %>% 
+  filter(measure %in% c('total_consumption_g_wh_domestic','total_consumption_g_wh_all_domestic')) %>%
+  select(type, year, value) %>% 
+  group_by(type) %>% 
+  # this years total minus last years, as a percent of last years
+  mutate(diff = fn_pcent(value - lag(value), lag(value))) %>% 
+  mutate(diff = case_when(year == '2015'~ as.character(value), T ~ diff)) %>% 
   ggplot(aes(x=year, y = value, fill = type)) +
-  geom_bar(position = 'stack', stat='identity') +
-  geom_text(aes(label = value), vjust = -0.5, position = position_stack(vjust = .5)) +
+  geom_bar(position = 'stack', stat='identity', alpha = 0.6) +
+  scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07")) +
+  geom_text(aes(label = diff), vjust = -0.5, position = position_stack(vjust = .5)) +
   scale_y_continuous(labels = label_number()) +
   ylab('Consumption (GWh)') +
   labs(title = 'Total Domestic Consumption (GWh) : 2051 - 2021',
        caption = paste0('SOURCE : ',data_source))
+
