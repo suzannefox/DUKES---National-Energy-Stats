@@ -75,8 +75,16 @@ df_energy <- df_energy %>%
 
 # list the available measures
 df_energy %>% 
-  count(type, measure) %>% 
-  print(n = Inf)
+  distinct(type, measure, year) %>% 
+  group_by(type, measure) %>% 
+  mutate(from = min(year),
+         to = max(year)) %>% 
+  ungroup() %>% 
+  distinct(type, measure, from, to) %>% 
+  print(n = Inf) 
+
+df_energy %>% 
+  count(local_authority)
 
 # -------------------------------------------------------------------------
 # STEP 3.a
@@ -125,6 +133,6 @@ df_energy %>%
   geom_text(aes(label = diff), vjust = -0.5, position = position_stack(vjust = .5)) +
   scale_y_continuous(labels = label_number()) +
   ylab('Consumption (GWh)') +
-  labs(title = 'Total Domestic Consumption (GWh) : 2051 - 2021',
+  labs(title = 'Total Domestic Consumption (GWh) : 2015 - 2021',
        caption = paste0('SOURCE : ',data_source))
 
