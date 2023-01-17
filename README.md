@@ -1,7 +1,7 @@
 # DUKES (Digest of UK Energy Statistics) National-Energy-Stats
 Analysis of data from https://www.gov.uk/government/statistics/digest-of-uk-energy-statistics-dukes-2021
 
-#### Example : % Change Year on Year of Domestic Energy Consumption in England
+#### Example : % Change Year on Year of Domestic energy consumption in England
 <img src="/DomesticConsumption.jpg" width="400" height="400">
 
 # Measures
